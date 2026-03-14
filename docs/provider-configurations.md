@@ -80,19 +80,19 @@ opencode auth login
 
 ## ZAI Coding Plan
 
-To use ZAI Coding Plan with GLM 4.7:
+To use ZAI Coding Plan with GLM 5:
 
 ```json
 {
   "preset": "zai-plan",
   "presets": {
     "zai-plan": {
-      "orchestrator": { "model": "zai-coding-plan/glm-4.7", "variant": "high", "skills": ["*"], "mcps": ["websearch"] },
-      "oracle": { "model": "zai-coding-plan/glm-4.7", "variant": "high", "skills": [], "mcps": [] },
-      "librarian": { "model": "zai-coding-plan/glm-4.7", "variant": "low", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
-      "explorer": { "model": "zai-coding-plan/glm-4.7", "variant": "low", "skills": [], "mcps": [] },
-      "designer": { "model": "zai-coding-plan/glm-4.7", "variant": "medium", "skills": ["agent-browser"], "mcps": [] },
-      "fixer": { "model": "zai-coding-plan/glm-4.7", "variant": "low", "skills": [], "mcps": [] }
+      "orchestrator": { "model": "zai-coding-plan/glm-5", "variant": "high", "skills": ["*"], "mcps": ["websearch"] },
+      "oracle": { "model": "zai-coding-plan/glm-5", "variant": "high", "skills": [], "mcps": [] },
+      "librarian": { "model": "zai-coding-plan/glm-5", "variant": "low", "skills": [], "mcps": ["websearch", "context7", "grep_app"] },
+      "explorer": { "model": "zai-coding-plan/glm-5", "variant": "low", "skills": [], "mcps": [] },
+      "designer": { "model": "zai-coding-plan/glm-5", "variant": "medium", "skills": ["agent-browser"], "mcps": [] },
+      "fixer": { "model": "zai-coding-plan/glm-5", "variant": "low", "skills": [], "mcps": [] }
     }
   }
 }

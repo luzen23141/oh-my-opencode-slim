@@ -40,12 +40,12 @@ export const MODEL_MAPPINGS = {
     fixer: { model: 'github-copilot/grok-code-fast-1', variant: 'low' },
   },
   'zai-plan': {
-    orchestrator: { model: 'zai-coding-plan/glm-4.7' },
-    oracle: { model: 'zai-coding-plan/glm-4.7', variant: 'high' },
-    librarian: { model: 'zai-coding-plan/glm-4.7', variant: 'low' },
-    explorer: { model: 'zai-coding-plan/glm-4.7', variant: 'low' },
-    designer: { model: 'zai-coding-plan/glm-4.7', variant: 'medium' },
-    fixer: { model: 'zai-coding-plan/glm-4.7', variant: 'low' },
+    orchestrator: { model: 'zai-coding-plan/glm-5' },
+    oracle: { model: 'zai-coding-plan/glm-5', variant: 'high' },
+    librarian: { model: 'zai-coding-plan/glm-5', variant: 'low' },
+    explorer: { model: 'zai-coding-plan/glm-5', variant: 'low' },
+    designer: { model: 'zai-coding-plan/glm-5', variant: 'medium' },
+    fixer: { model: 'zai-coding-plan/glm-5', variant: 'low' },
   },
 } as const;
 
