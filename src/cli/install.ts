@@ -613,12 +613,12 @@ async function runManualSetupMode(
 
   if (openai === 'yes') {
     availableModels.push({
-      model: 'openai/gpt-5.3-codex',
-      name: 'GPT-5.3 Codex',
+      model: 'openai/gpt-5.4',
+      name: 'GPT-5.4',
     });
     availableModels.push({
-      model: 'openai/gpt-5.1-codex-mini',
-      name: 'GPT-5.1 Codex Mini',
+      model: 'openai/gpt-5-codex',
+      name: 'GPT-5 Codex',
     });
   }
 

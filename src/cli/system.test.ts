@@ -81,9 +81,9 @@ describe('system', () => {
   "capabilities": { "reasoning": true, "toolcall": true, "attachment": false }
 }
 
-openai/gpt-5.3-codex
+openai/gpt-5.4
 {
-  "id": "gpt-5.3-codex",
+  "id": "gpt-5.4",
   "providerID": "openai",
   "name": "GPT-5.3 Codex",
   "status": "active",

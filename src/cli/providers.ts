@@ -24,12 +24,12 @@ export const MODEL_MAPPINGS = {
     fixer: { model: 'kimi-for-coding/k2p5', variant: 'low' },
   },
   openai: {
-    orchestrator: { model: 'openai/gpt-5.3-codex' },
-    oracle: { model: 'openai/gpt-5.3-codex', variant: 'high' },
-    librarian: { model: 'openai/gpt-5.1-codex-mini', variant: 'low' },
-    explorer: { model: 'openai/gpt-5.1-codex-mini', variant: 'low' },
-    designer: { model: 'openai/gpt-5.1-codex-mini', variant: 'medium' },
-    fixer: { model: 'openai/gpt-5.1-codex-mini', variant: 'low' },
+    orchestrator: { model: 'openai/gpt-5.4' },
+    oracle: { model: 'openai/gpt-5.4', variant: 'high' },
+    librarian: { model: 'openai/gpt-5-codex', variant: 'low' },
+    explorer: { model: 'openai/gpt-5-codex', variant: 'low' },
+    designer: { model: 'openai/gpt-5-codex', variant: 'medium' },
+    fixer: { model: 'openai/gpt-5-codex', variant: 'low' },
   },
   anthropic: {
     orchestrator: { model: 'anthropic/claude-opus-4-6' },
