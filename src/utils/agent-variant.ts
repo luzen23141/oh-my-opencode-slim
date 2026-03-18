@@ -1,4 +1,5 @@
 import type { PluginConfig } from '../config';
+import { getAgentOverride } from '../config/utils';
 import { log } from './logger';
 
 /**
@@ -37,7 +38,7 @@ export function resolveAgentVariant(
   agentName: string,
 ): string | undefined {
   const normalized = normalizeAgentName(agentName);
-  const rawVariant = config?.agents?.[normalized]?.variant;
+  const rawVariant = getAgentOverride(config, normalized)?.variant;
 
   if (typeof rawVariant !== 'string') {
     return undefined;

@@ -1,5 +1,17 @@
 import { z } from 'zod';
 
+// --- Tier system ---
+// TierLevel is a free-form string key defined by the user in config.tiers
+export const TierLevelSchema = z.string().min(1);
+export type TierLevel = string;
+
+// tiers is a record of tier-name → model-id; keys are user-defined
+export const TiersSchema = z.record(
+  z.string().min(1),
+  z.string().regex(/^[^/\s]+\/[^\s]+$/, 'Expected provider/model format'),
+);
+export type Tiers = z.infer<typeof TiersSchema>;
+
 const FALLBACK_AGENT_NAMES = [
   'orchestrator',
   'oracle',
@@ -82,21 +94,24 @@ export const AgentOverrideConfigSchema = z.object({
   model: z
     .union([
       z.string(),
-      z.array(
-        z.union([
-          z.string(),
-          z.object({
-            id: z.string(),
-            variant: z.string().optional(),
-          }),
-        ]),
-      ),
+      z
+        .array(
+          z.union([
+            z.string(),
+            z.object({
+              id: z.string(),
+              variant: z.string().optional(),
+            }),
+          ]),
+        )
+        .min(1),
     ])
     .optional(),
   temperature: z.number().min(0).max(2).optional(),
   variant: z.string().optional().catch(undefined),
   skills: z.array(z.string()).optional(), // skills this agent can use ("*" = all, "!item" = exclude)
   mcps: z.array(z.string()).optional(), // MCPs this agent can use ("*" = all, "!item" = exclude)
+  tier: TierLevelSchema.optional(), // model tier: 'mid' | 'low'; ignored if model is also set
 });
 
 // Tmux layout options
@@ -158,6 +173,7 @@ export const PluginConfigSchema = z.object({
   presets: z.record(z.string(), PresetSchema).optional(),
   agents: z.record(z.string(), AgentOverrideConfigSchema).optional(),
   disabled_mcps: z.array(z.string()).optional(),
+  tiers: TiersSchema.optional(), // user-defined tier-name → model-id map
   tmux: TmuxConfigSchema.optional(),
   background: BackgroundTaskConfigSchema.optional(),
   fallback: FailoverConfigSchema.optional(),

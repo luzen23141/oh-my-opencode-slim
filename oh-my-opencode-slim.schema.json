@@ -214,6 +214,7 @@
                   "type": "string"
                 },
                 {
+                  "minItems": 1,
                   "type": "array",
                   "items": {
                     "anyOf": [
@@ -258,6 +259,10 @@
               "items": {
                 "type": "string"
               }
+            },
+            "tier": {
+              "type": "string",
+              "minLength": 1
             }
           }
         }
@@ -277,6 +282,7 @@
                 "type": "string"
               },
               {
+                "minItems": 1,
                 "type": "array",
                 "items": {
                   "anyOf": [
@@ -321,6 +327,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "tier": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -329,6 +339,17 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[^/\\s]+\\/[^\\s]+$"
       }
     },
     "tmux": {

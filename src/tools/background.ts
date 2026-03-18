@@ -7,6 +7,7 @@ import type { BackgroundTaskManager } from '../background';
 import type { PluginConfig } from '../config';
 import { SUBAGENT_NAMES } from '../config';
 import type { TmuxConfig } from '../config/schema';
+import type { TierManager } from '../tiers';
 
 const z = tool.schema;
 
@@ -23,6 +24,7 @@ export function createBackgroundTools(
   manager: BackgroundTaskManager,
   _tmuxConfig?: TmuxConfig,
   _pluginConfig?: PluginConfig,
+  tierManager?: TierManager,
 ): Record<string, ToolDefinition> {
   const agentNames = SUBAGENT_NAMES.join(', ');
 
@@ -64,12 +66,16 @@ Key behaviors:
         return `Agent '${agent}' is not allowed. Allowed agents: ${allowed.join(', ')}`;
       }
 
+      // Resolve tier model at the boundary — manager stays tier-agnostic
+      const model = tierManager?.resolve(agent);
+
       // Fire-and-forget launch
       const task = manager.launch({
         agent,
         prompt,
         description,
         parentSessionId,
+        model,
       });
 
       return `Background task launched.

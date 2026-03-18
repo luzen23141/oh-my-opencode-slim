@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { stripJsonComments } from '../cli/config-io';
+import { AGENT_ALIASES } from './constants';
 import { type PluginConfig, PluginConfigSchema } from './schema';
 
 const PROMPTS_DIR_NAME = 'oh-my-opencode-slim';
@@ -115,6 +116,89 @@ function deepMerge<T extends Record<string, unknown>>(
   return result;
 }
 
+function toCanonicalAgentName(name: string): string {
+  return AGENT_ALIASES[name] ?? name;
+}
+
+function normalizeAgentOverrides(
+  agents?: PluginConfig['agents'],
+): PluginConfig['agents'] | undefined {
+  if (!agents) return agents;
+
+  const normalized = { ...agents };
+
+  // Canonicalize alias keys first so all later logic uses one key space.
+  for (const [name, cfg] of Object.entries(agents)) {
+    const canonicalName = toCanonicalAgentName(name);
+    if (canonicalName === name) continue;
+
+    if (normalized[canonicalName]) {
+      console.warn(
+        `[oh-my-opencode-slim] Both alias "${name}" and canonical agent name "${canonicalName}" are set. Preferring canonical entry and ignoring alias.`,
+      );
+    } else {
+      normalized[canonicalName] = cfg;
+    }
+    delete normalized[name];
+  }
+
+  for (const [name, cfg] of Object.entries(normalized)) {
+    const canonicalName = toCanonicalAgentName(name);
+
+    if (cfg.model !== undefined && cfg.tier !== undefined) {
+      console.warn(
+        `[oh-my-opencode-slim] Agent "${name}" has both "model" and "tier" set. Preferring "model" and ignoring "tier".`,
+      );
+      const { tier: _tier, ...rest } = cfg;
+      normalized[name] = rest;
+      continue;
+    }
+
+    if (canonicalName === 'orchestrator' && cfg.tier !== undefined) {
+      console.warn(
+        '[oh-my-opencode-slim] orchestrator.tier is ignored. Set orchestrator.model directly.',
+      );
+      const { tier: _tier, ...rest } = cfg;
+      normalized[name] = rest;
+    }
+  }
+
+  return normalized;
+}
+
+function mergeAgentOverrides(
+  base?: PluginConfig['agents'],
+  override?: PluginConfig['agents'],
+): PluginConfig['agents'] | undefined {
+  const normalizedBase = normalizeAgentOverrides(base);
+  const normalizedOverride = normalizeAgentOverrides(override);
+  const merged = deepMerge(normalizedBase, normalizedOverride);
+  if (!merged || !override) {
+    return normalizeAgentOverrides(merged);
+  }
+
+  for (const [name, overrideCfg] of Object.entries(normalizedOverride ?? {})) {
+    const mergedCfg = merged[name];
+    if (!mergedCfg) continue;
+
+    const hasOverrideModel = 'model' in overrideCfg;
+    const hasOverrideTier = 'tier' in overrideCfg;
+
+    if (hasOverrideModel && !hasOverrideTier && 'tier' in mergedCfg) {
+      const { tier: _tier, ...rest } = mergedCfg;
+      merged[name] = rest;
+      continue;
+    }
+
+    if (hasOverrideTier && !hasOverrideModel && 'model' in mergedCfg) {
+      const { model: _model, ...rest } = mergedCfg;
+      merged[name] = rest;
+    }
+  }
+
+  return normalizeAgentOverrides(merged);
+}
+
 /**
  * Load plugin configuration from user and project config files, merging them appropriately.
  *
@@ -157,7 +241,8 @@ export function loadPluginConfig(directory: string): PluginConfig {
     config = {
       ...config,
       ...projectConfig,
-      agents: deepMerge(config.agents, projectConfig.agents),
+      agents: mergeAgentOverrides(config.agents, projectConfig.agents),
+      tiers: deepMerge(config.tiers, projectConfig.tiers),
       tmux: deepMerge(config.tmux, projectConfig.tmux),
       fallback: deepMerge(config.fallback, projectConfig.fallback),
     };
@@ -174,7 +259,7 @@ export function loadPluginConfig(directory: string): PluginConfig {
     const preset = config.presets?.[config.preset];
     if (preset) {
       // Merge preset agents with root agents (root overrides)
-      config.agents = deepMerge(preset, config.agents);
+      config.agents = mergeAgentOverrides(preset, config.agents);
     } else {
       // Preset name specified but doesn't exist - warn user
       const presetSource =
@@ -187,6 +272,8 @@ export function loadPluginConfig(directory: string): PluginConfig {
       );
     }
   }
+
+  config.agents = normalizeAgentOverrides(config.agents);
 
   return config;
 }

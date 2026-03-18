@@ -12,6 +12,7 @@ import {
   createPostReadNudgeHook,
 } from './hooks';
 import { createBuiltinMcps } from './mcp';
+import { TierManager } from './tiers';
 import {
   ast_grep_replace,
   ast_grep_search,
@@ -22,6 +23,7 @@ import {
   lsp_goto_definition,
   lsp_rename,
 } from './tools';
+import { createTierTools } from './tools/tiers';
 import { startTmuxCheck } from './utils';
 import { log } from './utils/logger';
 
@@ -59,12 +61,16 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
     startTmuxCheck();
   }
 
+  // Initialize tier manager — resolves mid/low tier → model at launch boundary
+  const tierManager = new TierManager(config);
+
   const backgroundManager = new BackgroundTaskManager(ctx, tmuxConfig, config);
   const backgroundTools = createBackgroundTools(
     ctx,
     backgroundManager,
     tmuxConfig,
     config,
+    tierManager,
   );
   const mcps = createBuiltinMcps(config.disabled_mcps);
 
@@ -98,6 +104,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
     tool: {
       ...backgroundTools,
+      ...createTierTools(tierManager),
       lsp_goto_definition,
       lsp_find_references,
       lsp_diagnostics,
@@ -222,9 +229,6 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
 
       // For each agent, create permission rules based on their mcps list
       for (const [agentName, agentConfig] of Object.entries(agents)) {
-        const agentMcps = (agentConfig as { mcps?: string[] })?.mcps;
-        if (!agentMcps) continue;
-
         // Get or create agent permission config
         if (!configAgent[agentName]) {
           configAgent[agentName] = { ...agentConfig };
@@ -237,6 +241,19 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
           string,
           unknown
         >;
+
+        // Tier switching is global mutable state. Only the primary orchestrator
+        // should be allowed to change it.
+        if (!('set_tier' in agentPermission)) {
+          agentPermission.set_tier =
+            agentName === 'orchestrator' ? 'allow' : 'deny';
+        }
+
+        const agentMcps = (agentConfig as { mcps?: string[] })?.mcps;
+        if (!agentMcps) {
+          agentConfigEntry.permission = agentPermission;
+          continue;
+        }
 
         // Parse mcps list with wildcard and exclusion support
         const allowedMcps = parseList(agentMcps, allMcpNames);

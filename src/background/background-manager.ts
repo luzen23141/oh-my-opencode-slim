@@ -20,6 +20,7 @@ import {
   SUBAGENT_DELEGATION_RULES,
 } from '../config';
 import type { TmuxConfig } from '../config/schema';
+import { getAgentOverride } from '../config/utils';
 import {
   applyAgentVariant,
   createInternalAgentTextPart,
@@ -78,6 +79,7 @@ export interface BackgroundTask {
   startedAt: Date; // Task creation timestamp
   completedAt?: Date; // Task completion/failure timestamp
   prompt: string; // Initial prompt
+  model?: string; // Optional model override from launch options
 }
 
 /**
@@ -88,6 +90,7 @@ export interface LaunchOptions {
   prompt: string; // Initial prompt to send to the agent
   description: string; // Human-readable task description
   parentSessionId: string; // Parent session ID for task hierarchy
+  model?: string; // Optional model override (e.g. from tier resolution)
 }
 
 function generateTaskId(): string {
@@ -197,6 +200,7 @@ export class BackgroundTaskManager {
       },
       parentSessionId: opts.parentSessionId,
       prompt: opts.prompt,
+      model: opts.model,
     };
 
     this.tasks.set(task.id, task);
@@ -234,13 +238,15 @@ export class BackgroundTaskManager {
     }
   }
 
-  private resolveFallbackChain(agentName: string): string[] {
+  private resolveFallbackChain(task: BackgroundTask): string[] {
     const fallback = this.config?.fallback;
     const chains = fallback?.chains as
       | Record<string, string[] | undefined>
       | undefined;
-    const configuredChain = chains?.[agentName] ?? [];
-    const primary = this.config?.agents?.[agentName]?.model;
+    const configuredChain = chains?.[task.agent] ?? [];
+    // task.model (e.g. tier-resolved) takes priority over static agent config
+    const primary =
+      task.model ?? getAgentOverride(this.config, task.agent)?.model;
 
     const chain: string[] = [];
     const seen = new Set<string>();
@@ -384,9 +390,14 @@ export class BackgroundTaskManager {
         ? (this.config?.fallback?.timeoutMs ?? FALLBACK_FAILOVER_TIMEOUT_MS)
         : 0; // 0 = no timeout when fallback disabled
       const retryDelayMs = this.config?.fallback?.retryDelayMs ?? 500;
+
+      // task.model (set at launch time, e.g. from tier resolution) is the primary.
+      // fallback.enabled controls whether the retry chain is appended.
       const chain = fallbackEnabled
-        ? this.resolveFallbackChain(task.agent)
-        : [];
+        ? this.resolveFallbackChain(task)
+        : task.model
+          ? [task.model]
+          : [];
       const attemptModels = chain.length > 0 ? chain : [undefined];
 
       const errors: string[] = [];
